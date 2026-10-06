@@ -399,19 +399,26 @@ class ChatGPTBot extends EventEmitter {
                         if (!root) return '';
                         const clone = root.cloneNode(true);
 
-                        // 1. Convert KaTeX display / block math
-                        clone.querySelectorAll('.katex-display').forEach(kd => {
-                            const annotation = kd.querySelector('annotation');
-                            if (annotation && annotation.textContent) {
-                                kd.replaceWith(document.createTextNode('\n$$\n' + annotation.textContent.trim() + '\n$$\n'));
+                        // 1. Convert KaTeX display / block math (.katex-display, .math.math-display, [data-katex-display])
+                        clone.querySelectorAll('.katex-display, .math.math-display, div[data-display="true"]').forEach(kd => {
+                            const annotation = kd.querySelector('annotation[encoding="application/x-tex"], annotation');
+                            let tex = annotation ? annotation.textContent.trim() : (kd.getAttribute('data-tex') || '');
+                            if (tex) {
+                                kd.replaceWith(document.createTextNode('\n\n$$\n' + tex + '\n$$\n\n'));
                             }
                         });
 
-                        // 2. Convert KaTeX inline math
-                        clone.querySelectorAll('.katex').forEach(k => {
-                            const annotation = k.querySelector('annotation');
-                            if (annotation && annotation.textContent) {
-                                k.replaceWith(document.createTextNode(' $' + annotation.textContent.trim() + '$ '));
+                        // 2. Convert KaTeX inline math (.katex, .math.math-inline)
+                        clone.querySelectorAll('.katex, .math.math-inline').forEach(k => {
+                            if (!k.isConnected) return;
+                            const annotation = k.querySelector('annotation[encoding="application/x-tex"], annotation');
+                            let tex = annotation ? annotation.textContent.trim() : (k.getAttribute('data-tex') || '');
+                            if (tex) {
+                                if (tex.includes('\n') || tex.length > 80 || /\\begin\{(aligned|align|matrix|cases)/.test(tex)) {
+                                    k.replaceWith(document.createTextNode('\n\n$$\n' + tex + '\n$$\n\n'));
+                                } else {
+                                    k.replaceWith(document.createTextNode(' $' + tex + '$ '));
+                                }
                             }
                         });
 
@@ -438,7 +445,15 @@ class ChatGPTBot extends EventEmitter {
                             el.remove();
                         });
 
+                        // Temporarily mount clone into document so innerText layout calculations are 100% accurate
+                        const tempContainer = document.createElement('div');
+                        tempContainer.style.cssText = 'position: absolute; left: -9999px; top: -9999px; opacity: 0; pointer-events: none;';
+                        tempContainer.appendChild(clone);
+                        document.body.appendChild(tempContainer);
+
                         let text = clone.innerText || '';
+                        tempContainer.remove();
+
                         text = text.replace(/^ChatGPT said:\s*/i, '');
                         text = text.replace(/\n*ChatGPT is AI and can make mistakes\..*$/i, '');
                         text = text.replace(/\n*ChatGPT có thể mắc lỗi\..*$/i, '');

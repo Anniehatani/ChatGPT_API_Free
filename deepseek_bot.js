@@ -321,11 +321,61 @@ class DeepSeekBot {
                         }
                     }
 
+                    function extractCleanText(root) {
+                        if (!root) return '';
+                        const clone = root.cloneNode(true);
+
+                        // 1. Convert KaTeX display / block math
+                        clone.querySelectorAll('.katex-display, .math.math-display, div[data-display="true"]').forEach(kd => {
+                            const annotation = kd.querySelector('annotation[encoding="application/x-tex"], annotation');
+                            let tex = annotation ? annotation.textContent.trim() : (kd.getAttribute('data-tex') || '');
+                            if (tex) {
+                                kd.replaceWith(document.createTextNode('\n\n$$\n' + tex + '\n$$\n\n'));
+                            }
+                        });
+
+                        // 2. Convert KaTeX inline math
+                        clone.querySelectorAll('.katex, .math.math-inline').forEach(k => {
+                            if (!k.isConnected) return;
+                            const annotation = k.querySelector('annotation[encoding="application/x-tex"], annotation');
+                            let tex = annotation ? annotation.textContent.trim() : (k.getAttribute('data-tex') || '');
+                            if (tex) {
+                                if (tex.includes('\n') || tex.length > 80 || /\\begin\{(aligned|align|matrix|cases)/.test(tex)) {
+                                    k.replaceWith(document.createTextNode('\n\n$$\n' + tex + '\n$$\n\n'));
+                                } else {
+                                    k.replaceWith(document.createTextNode(' $' + tex + '$ '));
+                                }
+                            }
+                        });
+
+                        // 3. Preserve Code Blocks cleanly
+                        clone.querySelectorAll('pre').forEach(pre => {
+                            const codeEl = pre.querySelector('code');
+                            let lang = '';
+                            if (codeEl) {
+                                const m = codeEl.className.match(/language-([a-zA-Z0-9_-]+)/);
+                                if (m) lang = m[1];
+                            }
+                            let codeText = codeEl ? codeEl.innerText : pre.innerText;
+                            codeText = codeText.replace(/^Copy code\s*/i, '').trim();
+                            pre.replaceWith(document.createTextNode('\n```' + lang + '\n' + codeText + '\n```\n'));
+                        });
+
+                        const tempContainer = document.createElement('div');
+                        tempContainer.style.cssText = 'position: absolute; left: -9999px; top: -9999px; opacity: 0; pointer-events: none;';
+                        tempContainer.appendChild(clone);
+                        document.body.appendChild(tempContainer);
+
+                        let text = clone.innerText || '';
+                        tempContainer.remove();
+                        return text.trim();
+                    }
+
                     let lastMarkdownText = '';
                     let lastMarkdownHtml = '';
                     if (currentCount > prevCount || currentCount > 0) {
                         const target = markdowns[markdowns.length - 1];
-                        lastMarkdownText = target ? target.innerText : '';
+                        lastMarkdownText = target ? extractCleanText(target) : '';
                         lastMarkdownHtml = target ? target.innerHTML : '';
                     }
 

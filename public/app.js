@@ -18,6 +18,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let isBusy = false;
 
+    // Helper to safely escape HTML
+    function escapeHtml(str) {
+        return (str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
     // Configure marked for Markdown rendering
     if (window.marked) {
         marked.setOptions({
@@ -30,6 +35,94 @@ document.addEventListener('DOMContentLoaded', () => {
                 return code;
             }
         });
+    }
+
+    // High-fidelity Markdown + Math (KaTeX) parser
+    // Protects math equations from being corrupted by Markdown syntax (_ italics, = Setext headings, <br>, backslash escaping)
+    function renderMarkdownWithMath(content) {
+        if (!content || typeof content !== 'string') return '';
+
+        const mathStore = [];
+        function storeMath(tex, isDisplay) {
+            const id = mathStore.length;
+            mathStore.push({ tex: tex.trim(), isDisplay });
+            return `%%KATEX_FORMULA_${id}%%`;
+        }
+
+        let text = content.replace(/\r\n/g, '\n');
+
+        // 1. Protect Display Math: $$ ... $$
+        text = text.replace(/\$\$([\s\S]*?)\$\$/g, (match, tex) => {
+            return '\n\n' + storeMath(tex, true) + '\n\n';
+        });
+
+        // 2. Protect Display Math: \[ ... \]
+        text = text.replace(/\\\[([\s\S]*?)\\\]/g, (match, tex) => {
+            return '\n\n' + storeMath(tex, true) + '\n\n';
+        });
+
+        // 3. Protect LaTeX block environments: \begin{aligned}... \end{aligned}
+        const envRegex = /\\begin\{(equation\*?|align\*?|gather\*?|matrix|pmatrix|bmatrix|vmatrix|Vmatrix|cases|aligned)\}([\s\S]*?)\\end\{\1\}/g;
+        text = text.replace(envRegex, (match) => {
+            return '\n\n' + storeMath(match, true) + '\n\n';
+        });
+
+        // 4. Protect Inline Math: \( ... \)
+        text = text.replace(/\\\(([\s\S]*?)\\\)/g, (match, tex) => {
+            return storeMath(tex, false);
+        });
+
+        // 5. Protect Inline Math: $ ... $ (including multiline equations that have math commands)
+        text = text.replace(/(^|[^\\])\$([^\s\$](?:[\s\S]*?[^\s\$])?)\$/g, (match, prefix, tex) => {
+            // Avoid currency like $100 or $19.99
+            if (/^\d+(?:,\d{3})*(?:\.\d+)?$/.test(tex)) {
+                return match;
+            }
+            // If equation has line breaks or display-level math commands, format as display block
+            const isDisplay = tex.includes('\n') || tex.length > 70 || /\\(int|sum|prod|frac|lim|begin|boxed)/.test(tex);
+            const token = storeMath(tex, isDisplay);
+            return isDisplay ? (prefix + '\n\n' + token + '\n\n') : (prefix + token);
+        });
+
+        // 6. Prevent accidental Setext headings from lines with lone '=' or '-' right under math or text
+        text = text.replace(/([^\n])\n\s*([=-]{1,3})\s*(?=\n|$)/g, '$1\n\n$2\n\n');
+
+        // 7. Parse with marked
+        let html = '';
+        if (window.marked) {
+            html = marked.parse(text);
+        } else {
+            html = escapeHtml(text).replace(/\n/g, '<br>');
+        }
+
+        // 8. Replace math placeholders with KaTeX rendered HTML
+        html = html.replace(/%%KATEX_FORMULA_(\d+)%%/g, (match, id) => {
+            const item = mathStore[parseInt(id, 10)];
+            if (!item) return match;
+
+            if (window.katex) {
+                try {
+                    return katex.renderToString(item.tex, {
+                        displayMode: item.isDisplay,
+                        throwOnError: false,
+                        output: 'htmlAndMathml'
+                    });
+                } catch (err) {
+                    console.warn('KaTeX render error:', err);
+                    const escaped = escapeHtml(item.tex);
+                    return item.isDisplay
+                        ? `<div class="katex-display-error">$$${escaped}$$</div>`
+                        : `<code class="katex-inline-error">$${escaped}$</code>`;
+                }
+            } else {
+                const escaped = escapeHtml(item.tex);
+                return item.isDisplay
+                    ? `<div class="katex-display-fallback">$$${escaped}$$</div>`
+                    : `<code>$${escaped}$</code>`;
+            }
+        });
+
+        return html;
     }
 
     // Auto resize textarea
@@ -163,12 +256,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if (data.success) {
                 const duration = ((Date.now() - startTime) / 1000).toFixed(1);
                 
-                // Render markdown
-                if (window.marked) {
-                    bubble.innerHTML = marked.parse(data.reply);
-                } else {
-                    bubble.innerText = data.reply;
-                }
+                // Render markdown with protected math formulas
+                bubble.innerHTML = renderMarkdownWithMath(data.reply);
 
                 // Add meta stats
                 const meta = assistantRow.querySelector('.message-meta');
@@ -183,21 +272,6 @@ document.addEventListener('DOMContentLoaded', () => {
                             Sao chép
                         </button>
                     `;
-                }
-
-                // Render KaTeX math formulas if available
-                if (window.renderMathInElement) {
-                    try {
-                        renderMathInElement(bubble, {
-                            delimiters: [
-                                { left: '$$', right: '$$', display: true },
-                                { left: '$', right: '$', display: false }
-                            ],
-                            throwOnError: false
-                        });
-                    } catch (e) {
-                        console.warn('KaTeX render error:', e);
-                    }
                 }
 
                 if (window.hljs) {

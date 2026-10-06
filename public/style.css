@@ -460,6 +460,82 @@ body {
     padding: 0;
 }
 
+/* Headings inside messages */
+.message-bubble h1,
+.message-bubble h2,
+.message-bubble h3,
+.message-bubble h4 {
+    color: var(--text-primary);
+    font-weight: 700;
+    line-height: 1.35;
+    margin: 16px 0 8px;
+}
+.message-bubble h1:first-child,
+.message-bubble h2:first-child,
+.message-bubble h3:first-child,
+.message-bubble h4:first-child {
+    margin-top: 0;
+}
+.message-bubble h1 { font-size: 1.25rem; }
+.message-bubble h2 { font-size: 1.12rem; }
+.message-bubble h3 { font-size: 1.02rem; }
+.message-bubble h4 { font-size: 0.95rem; }
+
+/* Lists and Quotes */
+.message-bubble ul,
+.message-bubble ol {
+    padding-left: 20px;
+    margin: 8px 0 12px;
+}
+.message-bubble li {
+    margin-bottom: 4px;
+}
+.message-bubble blockquote {
+    border-left: 3px solid var(--primary);
+    padding-left: 12px;
+    margin: 10px 0;
+    color: var(--text-secondary);
+    font-style: italic;
+}
+
+/* Math (KaTeX) Display & Inline Styling */
+.message-bubble .katex-display {
+    margin: 14px 0 !important;
+    padding: 12px 18px;
+    background: rgba(15, 23, 42, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    border-radius: 12px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    text-align: center;
+    max-width: 100%;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+}
+.message-bubble .katex-display::-webkit-scrollbar {
+    height: 4px;
+}
+.message-bubble .katex-display::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+}
+.message-bubble .katex {
+    font-size: 1.06em;
+    line-height: 1.2;
+    text-rendering: auto;
+}
+.katex-display-error,
+.katex-display-fallback {
+    margin: 12px 0;
+    padding: 10px 14px;
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.25);
+    border-radius: 8px;
+    font-family: var(--font-mono);
+    font-size: 0.88rem;
+    overflow-x: auto;
+}
+
 /* Chat Input Dock */
 .chat-input-wrapper {
     padding: 16px 24px 24px;
