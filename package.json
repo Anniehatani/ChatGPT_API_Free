@@ -1,0 +1,27 @@
+{
+  "name": "chatgpt-api-free",
+  "version": "1.0.0",
+  "description": "ChatGPT Auto-Scraper & Free API Tool (Guest Mode) with OpenAI Compatible Endpoint",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
+    "cli": "node cli.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Anniehatani/ChatGPT_API_Free.git"
+  },
+  "keywords": ["chatgpt", "puppeteer", "scraper", "free-api", "openai-api"],
+  "author": "Anniehatani",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "cors": "^2.8.6",
+    "express": "^5.2.1",
+    "puppeteer-core": "^25.12.0",
+    "puppeteer-extra": "^3.3.6",
+    "puppeteer-extra-plugin-stealth": "^2.11.2"
+  }
+}

@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChatGPT Auto API & Bot Scraper | Không Cần Đăng Nhập</title>
+    <meta name="description" content="Công cụ tự động hóa cào dữ liệu ChatGPT Web không cần tài khoản, tự động xử lý popup và cung cấp API miễn phí.">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <!-- Highlight.js for code blocks -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.1/marked.min.js"></script>
+    <!-- KaTeX for beautiful math formulas -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Top Navigation Bar -->
+        <header class="app-header">
+            <div class="header-left">
+                <div class="logo-wrapper">
+                    <div class="logo-icon">
+                        <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 2a10 10 0 0 1 10 10c0 5.523-4.477 10-10 10a9.96 9.96 0 0 1-4.708-1.175L2 22l1.175-5.292A9.96 9.96 0 0 1 2 12C2 6.477 6.477 2 12 2z"></path>
+                            <path d="M8 12h.01M12 12h.01M16 12h.01"></path>
+                        </svg>
+                    </div>
+                    <div class="logo-text">
+                        <div class="logo-title">ChatGPT <span>Auto-API</span></div>
+                        <div class="logo-subtitle">Guest Mode • Tự Động Xóa Chat & Đóng Popup</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="header-center">
+                <!-- Status Badges -->
+                <div class="status-pill" id="browserStatusPill">
+                    <span class="status-dot pulsing" id="statusDot"></span>
+                    <span id="statusText">Đang kết nối...</span>
+                </div>
+                <div class="feature-tag">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                    </svg>
+                    <span>Không cần đăng nhập</span>
+                </div>
+            </div>
+
+            <div class="header-right">
+                <button class="btn btn-secondary" id="btnRestartBrowser" title="Khởi động lại trình duyệt Chrome">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M23 4v6h-6M1 20v-6h6"></path>
+                        <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                    </svg>
+                    <span>Khởi động lại Chrome</span>
+                </button>
+                <button class="btn btn-secondary" id="btnToggleApiModal">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                        <polyline points="10 9 9 9 8 9"></polyline>
+                    </svg>
+                    <span>API Docs</span>
+                </button>
+                <button class="btn btn-primary" id="btnNewChat">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                    <span>Đoạn chat mới</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Body Grid -->
+        <main class="main-layout">
+            <!-- Left / Center: Chat View -->
+            <section class="chat-section">
+                <!-- Smart Alert / Feature Banner -->
+                <div class="automation-banner">
+                    <div class="banner-icon">🤖</div>
+                    <div class="banner-content">
+                        <strong>Cơ chế tự động hóa thông minh đang hoạt động:</strong>
+                        <span>Tự động nhấn <code>Clear chat</code> khi hết hạn hội thoại • Tự động nhấn <code>[X]</code> khi hiện popup đăng nhập • Sao chép câu trả lời làm API</span>
+                    </div>
+                    <div class="banner-badge">Auto-RPA Active</div>
+                </div>
+
+                <!-- Messages Container -->
+                <div class="messages-container" id="messagesContainer">
+                    <!-- Welcome Card -->
+                    <div class="welcome-card" id="welcomeCard">
+                        <div class="welcome-icon">⚡</div>
+                        <h2>ChatGPT Guest API Ready</h2>
+                        <p>Hệ thống tự động điều khiển trình duyệt ChatGPT ở chế độ khách. Bạn có thể trò chuyện trực tiếp tại đây hoặc gọi qua cổng API <code>http://localhost:3000/api/chat</code>.</p>
+                        
+                        <div class="quick-prompts">
+                            <button class="quick-btn" onclick="sendQuickPrompt('Giải thích ngắn gọn cơ chế hoạt động của Docker trong 3 gạch đầu dòng')">
+                                🐳 Giải thích Docker trong 3 gạch đầu dòng
+                            </button>
+                            <button class="quick-btn" onclick="sendQuickPrompt('Viết một hàm Javascript tính số Fibonacci bằng đệ quy và memoization')">
+                                💻 Viết hàm JS tính Fibonacci tối ưu
+                            </button>
+                            <button class="quick-btn" onclick="sendQuickPrompt('Viết 1 đoạn thơ vui về lập trình viên làm việc ban đêm')">
+                                ✍️ Đoạn thơ vui về lập trình viên
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Chat Input Dock -->
+                <div class="chat-input-wrapper">
+                    <div class="input-container">
+                        <textarea 
+                            id="userInput" 
+                            rows="1" 
+                            placeholder="Nhập câu lệnh của bạn để gửi vào ChatGPT..." 
+                            autofocus
+                        ></textarea>
+                        
+                        <div class="input-actions">
+                            <span class="shortcut-tip">Shift + Enter xuống dòng • Enter để gửi</span>
+                            <button id="btnSendMessage" class="btn-send" title="Gửi tin nhắn">
+                                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5">
+                                    <line x1="22" y1="2" x2="11" y2="13"></line>
+                                    <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Right Sidebar: Live Activity & Logs -->
+            <aside class="sidebar-activity">
+                <div class="sidebar-header">
+                    <div class="sidebar-title">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+                        </svg>
+                        <span>Nhật ký Tự Động Hóa (Live)</span>
+                    </div>
+                    <span class="live-indicator">LIVE</span>
+                </div>
+
+                <div class="logs-stream" id="logsStream">
+                    <div class="log-item info">
+                        <span class="log-time">Vừa xong</span>
+                        <span class="log-text">Khởi chạy hệ thống cào ChatGPT...</span>
+                    </div>
+                </div>
+
+                <!-- System Stats Card -->
+                <div class="stats-card">
+                    <div class="stat-item">
+                        <span class="stat-label">Model mục tiêu:</span>
+                        <span class="stat-value">ChatGPT Guest (Free)</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Tự động Clear chat:</span>
+                        <span class="stat-value highlight">Bật (Active)</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Tự động bấm X Login:</span>
+                        <span class="stat-value highlight">Bật (Active)</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Cổng API phục vụ:</span>
+                        <span class="stat-value code-font">PORT 3000</span>
+                    </div>
+                </div>
+            </aside>
+        </main>
+
+        <!-- API Documentation & Code Snippets Modal -->
+        <div class="modal-backdrop" id="apiModal">
+            <div class="modal-card">
+                <div class="modal-header">
+                    <div class="modal-title">
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+                            <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                            <polyline points="2 17 12 22 22 17"></polyline>
+                            <polyline points="2 12 12 17 22 12"></polyline>
+                        </svg>
+                        <span>Tài Liệu Cổng API Miễn Phí</span>
+                    </div>
+                    <button class="modal-close" id="btnCloseApiModal">&times;</button>
+                </div>
+
+                <div class="modal-body">
+                    <p class="modal-desc">Tool đã mở sẵn 2 dạng API tiện lợi để bạn tích hợp vào bất kỳ dự án hay ứng dụng nào:</p>
+
+                    <div class="endpoint-tabs">
+                        <button class="tab-btn active" data-tab="tab-simple">API Đơn Giản (POST /api/chat)</button>
+                        <button class="tab-btn" data-tab="tab-openai">Chuẩn OpenAI (POST /v1/chat/completions)</button>
+                    </div>
+
+                    <!-- Tab 1: Simple JSON API -->
+                    <div class="tab-content active" id="tab-simple">
+                        <div class="endpoint-badge">
+                            <span class="method post">POST</span>
+                            <span class="url">http://localhost:3000/api/chat</span>
+                        </div>
+                        <p class="section-sub">Body (JSON):</p>
+                        <pre><code class="language-json">{
+  "message": "Xin chào ChatGPT!",
+  "newChat": false
+}</code></pre>
+                        
+                        <p class="section-sub">Ví dụ cURL:</p>
+                        <div class="code-wrapper">
+                            <pre><code class="language-bash">curl -X POST http://localhost:3000/api/chat \
+  -H "Content-Type: application/json" \
+  -d '{"message": "Viết thơ ngắn về mùa thu"}'</code></pre>
+                            <button class="btn-copy" onclick="copyCode(this)">Copy</button>
+                        </div>
+
+                        <p class="section-sub">Ví dụ Python:</p>
+                        <div class="code-wrapper">
+                            <pre><code class="language-python">import requests
+
+url = "http://localhost:3000/api/chat"
+payload = {"message": "Xin chào, bạn là ai?"}
+res = requests.post(url, json=payload)
+print(res.json()["reply"])</code></pre>
+                            <button class="btn-copy" onclick="copyCode(this)">Copy</button>
+                        </div>
+                    </div>
+
+                    <!-- Tab 2: OpenAI Format -->
+                    <div class="tab-content" id="tab-openai">
+                        <div class="endpoint-badge">
+                            <span class="method post">POST</span>
+                            <span class="url">http://localhost:3000/v1/chat/completions</span>
+                        </div>
+                        <p class="section-sub">Tương thích 100% với OpenAI SDK, LangChain, NextChat, OpenWebUI!</p>
+                        
+                        <p class="section-sub">Ví dụ Python với OpenAI SDK:</p>
+                        <div class="code-wrapper">
+                            <pre><code class="language-python">from openai import OpenAI
+
+client = OpenAI(
+    base_url="http://localhost:3000/v1",
+    api_key="anything"  # Không cần API key thực tế
+)
+
+response = client.chat.completions.create(
+    model="chatgpt-free",
+    messages=[{"role": "user", "content": "Tóm tắt định luật Newton"}]
+)
+
+print(response.choices[0].message.content)</code></pre>
+                            <button class="btn-copy" onclick="copyCode(this)">Copy</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

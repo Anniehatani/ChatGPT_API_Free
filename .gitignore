@@ -1,0 +1,25 @@
+# Dependencies
+node_modules/
+
+# Chromium / Puppeteer user data profiles & sessions
+chatgpt_profile/
+deepseek_profile/
+*_profile/
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# OS & Editor generated files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
